@@ -118,7 +118,7 @@ export default function AdminPage() {
 
 							<Link 
 								className={getClass("analytics")} 
-								to="/admin/analytics"
+								to="/powerbi-dashboard"
 							>
 								<BarChart3 className="w-5 h-5" />
 								<span className="font-medium">Analytics</span>

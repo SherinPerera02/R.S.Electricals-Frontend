@@ -13,6 +13,7 @@ import CartPage from './pages/client/cart'
 import CheckoutPage from './pages/client/checkOut'
 import OrderSuccessPage from './pages/client/orderSuccess'
 import { GoogleOAuthProvider } from '@react-oauth/google'
+import PowerBIDashboard from './pages/powerBIDashboard'
 
 function App() {
  
@@ -50,7 +51,7 @@ function App() {
           <Route path='/cart' element={<CartPage/>}/>
           <Route path='/checkout' element={<CheckoutPage/>}/>
           <Route path='/order-success' element={<OrderSuccessPage/>}/>
-          
+          <Route path='/powerbi-dashboard' element={<PowerBIDashboard/>}/>
           
         </Routes>
       </div>
