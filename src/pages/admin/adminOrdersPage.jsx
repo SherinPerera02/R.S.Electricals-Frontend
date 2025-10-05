@@ -14,6 +14,7 @@ export default function AdminOrdersPage() {
 	const [isLoading, setIsLoading] = useState(true);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [activeOrder, setActiveOrder] = useState(null);
+	const [statusSelectValue, setStatusSelectValue] = useState("");
 
 	useEffect(() => {
 		if (isLoading) {
@@ -94,16 +95,20 @@ export default function AdminOrdersPage() {
 												{activeOrder.status.toUpperCase()}
 											</span>
 											<select
+												value={statusSelectValue}
 												onChange={async (e) => {
 													const updatedValue = e.target.value;
+													setStatusSelectValue(updatedValue);
 													try {
 														const token = localStorage.getItem("token");
-														await axios.put(
-															import.meta.env.VITE_BACKEND_URL +
-																"/api/orders/" +
-																activeOrder.orderId +
-																"/" +
-																updatedValue,
+														const url = `${import.meta.env.VITE_BACKEND_URL}/api/orders/${activeOrder?.orderId}/${updatedValue}`;
+														console.log("PUT order status URL:", url);
+														if (!activeOrder?.orderId) {
+															toast.error("Order ID is missing — cannot update status");
+															return;
+														}
+														const res = await axios.put(
+															url,
 															{},
 															{
 																headers: {
@@ -111,19 +116,53 @@ export default function AdminOrdersPage() {
 																},
 															}
 														);
-														
-														setIsLoading(true);
-														const updatedOrder = {...activeOrder};
-														updatedOrder.status = updatedValue;
-														setActiveOrder(updatedOrder);
 
+														// update local orders list so table reflects change immediately
+														setOrders((prev) =>
+															prev.map((o) =>
+																o.orderId === activeOrder.orderId ? { ...o, status: updatedValue } : o
+															)
+														);
+
+														setActiveOrder((prev) => ({ ...prev, status: updatedValue }));
+														toast.success("Status updated");
 													} catch (e) {
-														toast.error("Error updating order status")
-														console.log(e)
+														const statusCode = e?.response?.status;
+														console.log("Order status update error:", statusCode, e?.response?.data || e);
+														// If the server doesn't support the /:orderId/:status route, try a fallback
+														if (statusCode === 404) {
+															try {
+																const token = localStorage.getItem("token");
+																const altUrl = `${import.meta.env.VITE_BACKEND_URL}/api/orders/${activeOrder.orderId}`;
+																console.log("Attempting fallback PUT to:", altUrl);
+																const altRes = await axios.put(
+																	altUrl,
+																	{ status: updatedValue },
+																	{
+																		headers: {
+																			Authorization: "Bearer " + token,
+																		},
+																	}
+																);
+
+																setOrders((prev) =>
+																	prev.map((o) =>
+																		o.orderId === activeOrder.orderId ? { ...o, status: updatedValue } : o
+																	)
+																);
+																setActiveOrder((prev) => ({ ...prev, status: updatedValue }));
+																toast.success("Status updated (fallback)");
+																return;
+															} catch (err2) {
+																console.log("Fallback update error:", err2?.response?.status, err2?.response?.data || err2);
+															}
+														}
+
+														toast.error("Error updating order status");
 													}
 												}}
 											>
-												<option selected disabled>
+												<option value="" disabled>
 													Change status
 												</option>
 												<option value="pending">Pending</option>
@@ -155,13 +194,13 @@ export default function AdminOrdersPage() {
 
 								<h3 className="text-xl font-semibold mt-4">Products</h3>
 								<table className="w-full text-center border border-gray-200 shadow rounded">
-									<thead className="bg-[var(--color-accent)] text-white">
+									<thead className="bg-[var(--color-accent)] text-gray-900">
 										<tr>
-											<th className="py-2 px-2">Image</th>
-											<th className="py-2 px-2">Product</th>
-											<th className="py-2 px-2">Price</th>
-											<th className="py-2 px-2">Quantity</th>
-											<th className="py-2 px-2">Subtotal</th>
+											<th className="py-2 px-2 font-semibold">Image</th>
+											<th className="py-2 px-2 font-semibold">Product</th>
+											<th className="py-2 px-2 font-semibold">Price</th>
+											<th className="py-2 px-2 font-semibold">Quantity</th>
+											<th className="py-2 px-2 font-semibold">Subtotal</th>
 										</tr>
 									</thead>
 									<tbody>
@@ -220,25 +259,26 @@ export default function AdminOrdersPage() {
 					</Modal>
 
 					<table className="w-full text-center border border-gray-200 shadow-md rounded-lg overflow-hidden">
-						<thead className="bg-[var(--color-accent)] text-white">
+						<thead className="bg-[var(--color-accent)] text-gray-900">
 							<tr>
-								<th className="py-3 px-2">Order ID</th>
-								<th className="py-3 px-2">Name</th>
-								<th className="py-3 px-2">Email</th>
-								<th className="py-3 px-2">Phone</th>
-								<th className="py-3 px-2">Total (Rs)</th>
-								<th className="py-3 px-2">Date</th>
-								<th className="py-3 px-2">Status</th>
+								<th className="py-3 px-2 font-semibold">Order ID</th>
+								<th className="py-3 px-2 font-semibold">Name</th>
+								<th className="py-3 px-2 font-semibold">Email</th>
+								<th className="py-3 px-2 font-semibold">Phone</th>
+								<th className="py-3 px-2 font-semibold">Total (Rs)</th>
+								<th className="py-3 px-2 font-semibold">Date</th>
+								<th className="py-3 px-2 font-semibold">Status</th>
 							</tr>
 						</thead>
 						<tbody>
 							{orders.map((order, index) => (
 								<tr
-									key={index}
-									onClick={() => {
-										setActiveOrder(order);
-										setIsModalOpen(true);
-									}}
+										key={index}
+										onClick={() => {
+											setActiveOrder(order);
+											setStatusSelectValue("");
+											setIsModalOpen(true);
+										}}
 									className={`cursor-pointer ${
 										index % 2 === 0
 											? "bg-[var(--color-primary)]"

@@ -10,7 +10,6 @@ import Loading from "../components/loading";
 import { clearUserCart } from "../utils/cart";
 import { 
 	Package, 
-	Users, 
 	ShoppingCart, 
 	Star, 
 	BarChart3, 
@@ -24,6 +23,7 @@ export default function AdminPage() {
 	const location = useLocation();
 	const path = location.pathname;
 	const [status, setStatus] = useState("loading");
+    const [mobileOpen, setMobileOpen] = useState(false);
 
 	useEffect(() => {
 		const token = localStorage.getItem("token");
@@ -75,8 +75,8 @@ export default function AdminPage() {
 			{status == "loading" || status == "unauthenticated" ? 
 				<Loading/> : 
 				<>
-					{/* Modern Sidebar */}
-					<div className="fixed left-0 top-0 h-screen w-80 bg-white shadow-2xl border-r border-gray-200 flex flex-col z-40">
+					{/* Desktop sidebar */}
+					<div className="hidden md:flex fixed left-0 top-0 h-screen w-80 bg-white shadow-2xl border-r border-gray-200 flex-col z-40">
 						{/* Header */}
 						<div className="p-6 border-b border-gray-100">
 							<div className="flex items-center space-x-3">
@@ -99,15 +99,7 @@ export default function AdminPage() {
 								<Package className="w-5 h-5" />
 								<span className="font-medium">Products</span>
 							</Link>
-							
-							<Link 
-								className={getClass("users")} 
-								to="/admin/users"
-							>
-								<Users className="w-5 h-5" />
-								<span className="font-medium">Users</span>
-							</Link>
-							
+						
 							<Link 
 								className={getClass("orders")} 
 								to="/admin/orders"
@@ -115,7 +107,7 @@ export default function AdminPage() {
 								<ShoppingCart className="w-5 h-5" />
 								<span className="font-medium">Orders</span>
 							</Link>
-							
+						
 							<Link 
 								className={getClass("reviews")} 
 								to="/admin/reviews"
@@ -142,7 +134,7 @@ export default function AdminPage() {
 								<Home className="w-5 h-5" />
 								<span className="font-medium">Back to Site</span>
 							</Link>
-							
+						
 							<button 
 								onClick={handleLogout}
 								className="w-full flex items-center space-x-3 p-4 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all duration-300"
@@ -153,8 +145,56 @@ export default function AdminPage() {
 						</div>
 					</div>
 
+					{/* Mobile sidebar (drawer) */}
+					{mobileOpen && (
+						<>
+							<div className="fixed inset-0 bg-black/40 z-40" onClick={() => setMobileOpen(false)} />
+							<div className="fixed left-0 top-0 h-screen w-64 bg-white shadow-2xl border-r border-gray-200 flex flex-col z-50 p-4 md:hidden">
+								<div className="flex items-center justify-between mb-4">
+									<div className="flex items-center space-x-3">
+										<div className="w-10 h-10 rounded-lg overflow-hidden">
+											<img src="/logo.png" alt="logo" className="w-full h-full object-contain" />
+										</div>
+										<div>
+											<h1 className="text-lg font-bold">R.S. Electricals</h1>
+										</div>
+									</div>
+									<button onClick={() => setMobileOpen(false)} className="text-gray-600">Close</button>
+								</div>
+								<nav className="flex-1 space-y-2">
+									<Link onClick={() => setMobileOpen(false)} className={getClass("products")} to="/admin/products">
+										<Package className="w-5 h-5" />
+										<span className="font-medium">Products</span>
+									</Link>
+									<Link onClick={() => setMobileOpen(false)} className={getClass("orders")} to="/admin/orders">
+										<ShoppingCart className="w-5 h-5" />
+										<span className="font-medium">Orders</span>
+									</Link>
+									<Link onClick={() => setMobileOpen(false)} className={getClass("reviews")} to="/admin/reviews">
+										<Star className="w-5 h-5" />
+										<span className="font-medium">Reviews</span>
+									</Link>
+									<Link onClick={() => setMobileOpen(false)} className={getClass("analytics")} to="/admin/analytics">
+										<BarChart3 className="w-5 h-5" />
+										<span className="font-medium">Analytics</span>
+									</Link>
+								</nav>
+								<div className="pt-4 border-t border-gray-100">
+									<Link onClick={() => setMobileOpen(false)} to="/" className="flex items-center space-x-3 p-3 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all duration-300">
+										<Home className="w-5 h-5" />
+										<span className="font-medium">Back to Site</span>
+									</Link>
+									<button onClick={handleLogout} className="w-full flex items-center space-x-3 p-3 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all duration-300">
+										<LogOut className="w-5 h-5" />
+										<span className="font-medium">Logout</span>
+									</button>
+								</div>
+							</div>
+						</>
+					)}
+
 					{/* Modern Main Content */}
-					<div className="flex-1 flex flex-col ml-80">
+					<div className="flex-1 flex flex-col md:ml-80 ml-0">
 						{/* Top Header Bar */}
 						<header className="bg-white shadow-sm border-b border-gray-200 p-6">
 							<div className="flex items-center justify-between">
@@ -184,13 +224,7 @@ export default function AdminPage() {
 							<div className="bg-white rounded-2xl shadow-sm border border-gray-200 min-h-full p-6">
 								<Routes>
 									<Route path="/products" element={<AdminProductsPage />} />
-									<Route path="/users" element={
-										<div className="text-center py-12">
-											<Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-											<h3 className="text-xl font-semibold text-gray-600 mb-2">Users Management</h3>
-											<p className="text-gray-500">Coming Soon...</p>
-										</div>
-									} />
+                                    
 									<Route path="/orders" element={<AdminOrdersPage />} />
 									<Route path="/reviews" element={
 										<div className="text-center py-12">
@@ -209,30 +243,29 @@ export default function AdminPage() {
 									<Route path="/add-product" element={<AddProductPage />} />
 									<Route path="/edit-product" element={<EditProductPage />} />
 									<Route path="/*" element={
-										<div className="text-center py-12">
+										<div className="flex flex-col items-center justify-center text-center py-12 min-h-[50vh]">
 											<h3 className="text-2xl font-bold text-gray-800 mb-2">Welcome to Admin Dashboard</h3>
 											<p className="text-gray-500 mb-6">Manage your R.S. Electricals business efficiently</p>
-											<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-4xl mx-auto">
-												<div className="bg-blue-50 p-6 rounded-xl text-center">
+											<div className="grid grid-cols-3 md:grid-cols-2 lg:grid-cols-3 items-center justify-center gap-4 w-full max-w-4xl">
+												<Link to="/admin/products" aria-label="Go to Products" className="bg-blue-50 p-6 rounded-xl text-center hover:shadow-lg transition transform hover:-translate-y-1 cursor-pointer">
 													<Package className="w-8 h-8 text-blue-600 mx-auto mb-2" />
 													<h4 className="font-semibold text-gray-800">Products</h4>
 													<p className="text-sm text-gray-600">Manage inventory</p>
-												</div>
-												<div className="bg-green-50 p-6 rounded-xl text-center">
-													<Users className="w-8 h-8 text-green-600 mx-auto mb-2" />
-													<h4 className="font-semibold text-gray-800">Users</h4>
-													<p className="text-sm text-gray-600">Customer management</p>
-												</div>
-												<div className="bg-purple-50 p-6 rounded-xl text-center">
+												</Link>
+
+                                                
+
+												<Link to="/admin/orders" aria-label="Go to Orders" className="bg-purple-50 p-6 rounded-xl text-center hover:shadow-lg transition transform hover:-translate-y-1 cursor-pointer">
 													<ShoppingCart className="w-8 h-8 text-purple-600 mx-auto mb-2" />
 													<h4 className="font-semibold text-gray-800">Orders</h4>
 													<p className="text-sm text-gray-600">Track sales</p>
-												</div>
-												<div className="bg-yellow-50 p-6 rounded-xl text-center">
+												</Link>
+
+												<Link to="/admin/reviews" aria-label="Go to Reviews" className="bg-yellow-50 p-6 rounded-xl text-center hover:shadow-lg transition transform hover:-translate-y-1 cursor-pointer">
 													<Star className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
 													<h4 className="font-semibold text-gray-800">Reviews</h4>
 													<p className="text-sm text-gray-600">Customer feedback</p>
-												</div>
+												</Link>
 											</div>
 										</div>
 									} />
